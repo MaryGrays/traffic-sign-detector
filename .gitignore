@@ -23,3 +23,36 @@ models/
 
 # Docker
 *.log
+
+# macOS system files
+.DS_Store
+*.DS_Store
+
+# Backup and temporary files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# Log files
+*.log
+logs/
+
+# Local development files
+local_settings.py
+settings_local.py
+
+# Test and temporary directories
+tmp/
+temp/
+test_output/
+
+# IDE - PyCharm
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Container-generated duplicate (backup in web_from_container_backup.tar.gz)
+web_from_container/
