@@ -56,3 +56,17 @@ test_output/
 
 # Container-generated duplicate (backup in web_from_container_backup.tar.gz)
 web_from_container/
+
+# Django database
+db.sqlite3
+*.sqlite3
+*.db
+
+# Media and user uploads
+media/
+uploads/
+
+# Local backups
+*.tar.gz
+*.zip
+*.backup
