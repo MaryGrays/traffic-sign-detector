@@ -1,0 +1,45 @@
+{% extends 'traffic_signs/base.html' %}
+
+{% block title %}Обработка изображения{% endblock %}
+
+{% block content %}
+<h1>⏳ Обработка изображения</h1>
+
+<div id="processing-status">
+    <p>{{ message }}</p>
+    <p>ID задачи: <code>{{ task_id }}</code></p>
+    
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Загрузка...</span>
+    </div>
+    
+    <p>Пожалуйста, подождите...</p>
+</div>
+
+<script>
+// Автоматическая проверка статуса задачи
+const taskId = "{{ task_id }}";
+const checkInterval = 2000; // 2 секунды
+
+function checkTaskStatus() {
+    fetch(`/task/status/${taskId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.ready) {
+                // Задача завершена, перенаправляем на результаты
+                window.location.href = "/results/";
+            } else {
+                // Задача еще выполняется, проверяем снова через 2 секунды
+                setTimeout(checkTaskStatus, checkInterval);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking task status:', error);
+            setTimeout(checkTaskStatus, checkInterval);
+        });
+}
+
+// Начинаем проверку статуса
+setTimeout(checkTaskStatus, checkInterval);
+</script>
+{% endblock %}

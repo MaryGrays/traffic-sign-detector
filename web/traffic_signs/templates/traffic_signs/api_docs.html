@@ -1,0 +1,115 @@
+{% extends "traffic_signs/base.html" %}
+
+{% block title %}API Documentation - Traffic Sign Detector{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h2>📚 API Documentation</h2>
+    </div>
+    <div class="card-body">
+        <h3>REST API Endpoints</h3>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-dark text-white">
+                <h4>POST /api/detect/</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> Detect traffic signs in an image</p>
+                <p><strong>Content-Type:</strong> application/json</p>
+                
+                <h5>Request Example:</h5>
+                <pre><code>{
+  "image_url": "https://example.com/sign.jpg",
+  "threshold": 0.5
+}</code></pre>
+                
+                <h5>Response Example:</h5>
+                <pre><code>{
+  "success": true,
+  "detections": [
+    {
+      "sign_name": "Stop",
+      "confidence": 0.95,
+      "bounding_box": [100, 100, 200, 200]
+    }
+  ]
+}</code></pre>
+                
+                <a href="http://localhost:8001/docs" class="btn btn-info">Try FastAPI Docs</a>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-dark text-white">
+                <h4>GET /check-task/&lt;task_id&gt;/</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Description:</strong> Check status of Celery task</p>
+                <p><strong>Example:</strong> <code>GET /check-task/abc123-def456/</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h4>🔄 Try API Demo</h4>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="apiImage" class="form-label">Test Image for API:</label>
+            <input type="file" class="form-control" id="apiImage">
+        </div>
+        <button id="testApiBtn" class="btn btn-success">Test API Detection</button>
+        
+        <div id="apiResult" class="mt-3"></div>
+    </div>
+</div>
+
+<script>
+document.getElementById('testApiBtn').addEventListener('click', function() {
+    const fileInput = document.getElementById('apiImage');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image first');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Image = e.target.result.split(',')[1];
+        
+        fetch('/api/detect/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image_base64: base64Image,
+                threshold: 0.5
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h5>API Response:</h5>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('apiResult').innerHTML = `
+                <div class="alert alert-danger">
+                    Error: ${error.message}
+                </div>
+            `;
+        });
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}

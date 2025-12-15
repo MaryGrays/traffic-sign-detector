@@ -1,0 +1,10 @@
+Django==4.2.7
+Pillow==10.3.0
+celery==5.3.6
+redis==5.0.5
+psycopg2-binary==2.9.9
+whitenoise==6.7.0
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+torch==2.3.0
+torchvision==0.18.0

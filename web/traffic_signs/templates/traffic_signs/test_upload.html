@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h1>Простой тест загрузки</h1>
+    
+    <form id="simpleForm">
+        <input type="file" id="fileInput" required>
+        <button type="submit">Тест загрузки</button>
+    </form>
+    
+    <div id="output"></div>
+    
+    <script>
+    document.getElementById('simpleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Выберите файл');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        try {
+            const response = await fetch('/celery-upload/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+            
+            const result = await response.json();
+            document.getElementById('output').innerHTML = 
+                `Ответ: ${JSON.stringify(result)}`;
+        } catch (error) {
+            document.getElementById('output').innerHTML = 
+                `Ошибка: ${error.message}`;
+        }
+    });
+    </script>
+</body>
+</html>

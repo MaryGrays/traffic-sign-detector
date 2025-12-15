@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Celery Upload</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        form { border: 1px solid #ccc; padding: 20px; border-radius: 5px; }
+        input, button { margin: 10px 0; padding: 10px; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .progress { background-color: #cce5ff; color: #004085; }
+        #progress-bar { width: 100%; background-color: #f0f0f0; border-radius: 5px; margin: 10px 0; }
+        #progress-bar-fill { height: 20px; background-color: #28a745; border-radius: 5px; width: 0%; }
+    </style>
+</head>
+<body>
+    <h1>🚦 Test Celery Upload</h1>
+
+    <form method="POST" action="/celery-upload/" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+        <div>
+            <label for="image"><strong>Select Image:</strong></label><br>
+            <input type="file" id="image" name="image" accept="image/*" required>
+        </div>
+        <div>
+            <button type="submit" style="background-color: #28a745; color: white; border: none; padding: 10px 20px;">
+                📤 Upload for Celery Processing
+            </button>
+        </div>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const resultDiv = document.getElementById('result');
+
+        resultDiv.innerHTML = `
+            <div class="progress">
+                <h3>⏳ Processing...</h3>
+                <div id="progress-bar">
+                    <div id="progress-bar-fill"></div>
+                </div>
+                <p id="status-text">Uploading file...</p>
+            </div>
+        `;
+
+        fetch('/celery-upload/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.task_id) {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Task Submitted!</h3>
+                        <p><strong>Task ID:</strong> <code>${data.task_id}</code></p>
+                        <p>Processing started...</p>
+                    </div>
+                `;
+                checkTaskStatus(data.task_id);
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Error</h3>
+                        <p>${data.error || 'Unknown error'}</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `
+                <div class="error">
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        });
+    });
+
+    function checkTaskStatus(taskId) {
+        fetch(`/check-task/${taskId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('result');
+
+            if (data.status === 'SUCCESS') {
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Processing Complete!</h3>
+                        <p><strong>Task ID:</strong> <code>${data.task_id}</code></p>
+                        <pre>${JSON.stringify(data.result, null, 2)}</pre>
+                    </div>
+                `;
+            } else if (data.status === 'PROGRESS') {
+                const percent = data.progress?.percent || 0;
+                resultDiv.innerHTML = `
+                    <div class="progress">
+                        <h3>⏳ Processing: ${percent}%</h3>
+                        <div id="progress-bar">
+                            <div id="progress-bar-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <p id="status-text">${data.progress?.status || 'Processing...'}</p>
+                    </div>
+                `;
+                // Check again in 2 seconds
+                setTimeout(() => checkTaskStatus(taskId), 2000);
+            } else if (data.status === 'PENDING' || data.status === 'STARTED') {
+                resultDiv.innerHTML = `
+                    <div class="progress">
+                        <h3>⏳ Processing...</h3>
+                        <p>Status: ${data.status}</p>
+                    </div>
+                `;
+                setTimeout(() => checkTaskStatus(taskId), 2000);
+            } else if (data.status === 'FAILURE') {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Processing Failed</h3>
+                        <p>${data.error || 'Unknown error'}</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error checking task status:', error);
+            setTimeout(() => checkTaskStatus(taskId), 2000);
+        });
+    }
+    </script>
+</body>
+</html>

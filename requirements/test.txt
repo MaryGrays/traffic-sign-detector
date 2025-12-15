@@ -1,0 +1,9 @@
+-r web.txt
+-r api.txt
+pytest==7.4.0
+pytest-django==4.7.0
+pytest-asyncio==0.21.1
+httpx==0.25.0
+factory-boy==3.3.0
+Faker==20.1.0
+coverage==7.3.2

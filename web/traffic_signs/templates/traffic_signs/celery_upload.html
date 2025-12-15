@@ -1,0 +1,38 @@
+{% extends "traffic_signs/base.html" %}
+
+{% block title %}Celery Upload - Traffic Sign Detector{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h2>Celery Background Processing</h2>
+    </div>
+    <div class="card-body">
+        <p class="lead">
+            Upload an image for background processing with Celery and Redis.
+            The image will be processed asynchronously.
+        </p>
+        
+        <!-- ПРОСТАЯ ФОРМА БЕЗ JAVASCRIPT -->
+        <form method="POST" action="/celery-upload/" enctype="multipart/form-data">
+    {% csrf_token %}
+            <div class="mb-3">
+                <label for="image" class="form-label">Select Image:</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+            </div>
+                <button type="submit" class="btn btn-success btn-lg">
+                📤 Upload for Celery Processing
+                </button>
+        </form>
+
+        <!-- Сообщение о результате (будет показано после отправки) -->
+        {% if task_id %}
+        <div class="alert alert-info mt-3">
+            <h4>✅ Task Submitted!</h4>
+            <p>Task ID: <code>{{ task_id }}</code></p>
+            <p>Check Celery worker logs for progress.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

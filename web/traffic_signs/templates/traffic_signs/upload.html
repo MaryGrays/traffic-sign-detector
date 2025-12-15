@@ -1,0 +1,100 @@
+{% extends "traffic_signs/base.html" %}
+
+{% block title %}Upload - Traffic Sign Detector{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2>📤 Upload Traffic Sign Image</h2>
+    </div>
+    <div class="card-body">
+        <p class="lead">Upload an image containing traffic signs for immediate detection.</p>
+        
+        <form method="POST" action="/upload/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="image" class="form-label">Select Image:</label>
+                <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">
+                🔍 Detect Traffic Signs
+            </button>
+        </form>
+        
+        {% if detection %}
+        <div class="mt-4">
+            <h3>✅ Detection Results</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Uploaded Image:</h5>
+                    <img src="{{ detection.image.url }}" alt="Uploaded image" class="img-fluid rounded" style="max-height: 300px;">
+                </div>
+                <div class="col-md-6">
+                    <h5>Detection Info:</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Detected Sign:</strong> {{ detection.sign.name }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Confidence:</strong> {{ detection.confidence|floatformat:2 }}%
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Detection Time:</strong> {{ detection.detected_at|date:"H:i:s" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Sign Type:</strong> 
+                            <span class="badge bg-{{ detection.sign.sign_type|default:'warning' }}">
+                                {{ detection.sign.sign_type|default:"Unknown" }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h4>📋 Recent Detections</h4>
+    </div>
+    <div class="card-body">
+        {% if recent_detections %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Sign</th>
+                        <th>Confidence</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for det in recent_detections %}
+                    <tr>
+                        <td>
+                            <img src="{{ det.image.url }}" alt="Detection" style="width: 100px; height: auto;">
+                        </td>
+                        <td>{{ det.sign.name }}</td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ det.confidence|floatformat:0 }}%">
+                                    {{ det.confidence|floatformat:1 }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ det.detected_at|timesince }} ago</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No recent detections. Upload an image to see results here!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

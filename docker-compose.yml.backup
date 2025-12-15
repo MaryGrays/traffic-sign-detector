@@ -1,0 +1,14 @@
+services:
+  web:
+    build: ./web
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./web/app:/app/app
+
+  api:
+    build: ./api
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./api/app:/app/app

@@ -1,0 +1,53 @@
+"""
+Views for traffic_signs application
+"""
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views import View
+import json
+
+# Basic views
+def home(request):
+    return render(request, 'traffic_signs/home.html', {
+        'title': 'Traffic Sign Detector - Home'
+    })
+
+def upload_image(request):
+    if request.method == 'POST' and request.FILES.get('image'):
+        # Simple processing for demonstration
+        return JsonResponse({
+            'success': True,
+            'message': 'Image uploaded successfully (demo)',
+            'results': []
+        })
+    return render(request, 'traffic_signs/upload.html')
+
+def results(request):
+    return render(request, 'traffic_signs/results.html')
+
+def api_docs(request):
+    return render(request, 'traffic_signs/api_docs.html')
+
+def api_detect(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            return JsonResponse({
+                'success': True,
+                'message': 'API processing (demo)',
+                'results': [
+                    {
+                        'sign_id': 1,
+                        'sign_name': 'Stop',
+                        'confidence': 0.95,
+                        'bounding_box': [100, 100, 200, 200]
+                    }
+                ]
+            })
+        except:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid JSON'
+            })  # ← ЗАКРЫТ СЛОВАРЬ И ФУНКЦИЯ
+    return JsonResponse({'error': 'POST method required'})
+

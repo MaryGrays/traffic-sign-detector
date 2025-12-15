@@ -1,0 +1,94 @@
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  POSTGRES_DB: test_db
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+
+services:
+  - postgres:15
+  - redis:7-alpine
+
+test:django:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - apt-get update && apt-get install -y gcc libpq-dev
+    - pip install --upgrade pip
+    - cd web
+    - pip install -r requirements.txt
+    - pip install pytest pytest-django
+  script:
+    - python manage.py test --noinput
+    - python -m pytest tests/ -v
+  artifacts:
+    when: always
+    paths:
+      - web/test-reports/
+    reports:
+      junit: web/test-reports/junit.xml
+
+test:fastapi:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - cd api
+    - pip install -r requirements.txt
+    - pip install pytest httpx
+  script:
+    - python -m pytest tests/ -v
+
+build:web:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "\$CI_REGISTRY_USER" -p "\$CI_REGISTRY_PASSWORD" \$CI_REGISTRY
+  script:
+    - docker build -t \$CI_REGISTRY_IMAGE/web:latest ./web
+    - docker push \$CI_REGISTRY_IMAGE/web:latest
+
+build:api:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "\$CI_REGISTRY_USER" -p "\$CI_REGISTRY_PASSWORD" \$CI_REGISTRY
+  script:
+    - docker build -t \$CI_REGISTRY_IMAGE/api:latest ./api
+    - docker push \$CI_REGISTRY_IMAGE/api:latest
+
+deploy:staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - apk add --no-cache curl
+    - echo "Deploying to staging environment..."
+    # Здесь будет скрипт деплоя
+    - echo "Deployment completed"
+  environment:
+    name: staging
+    url: https://staging.traffic-sign.example.com
+  only:
+    - main
+
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - apk add --no-cache curl
+    - echo "Deploying to production environment..."
+    # Здесь будет скрипт деплоя
+    - echo "Deployment completed"
+  environment:
+    name: production
+    url: https://traffic-sign.example.com
+  when: manual
+  only:
+    - tags

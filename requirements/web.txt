@@ -1,0 +1,8 @@
+# Берем общие зависимости
+-r base.txt
+
+# Специфичные для Django
+psycopg2-binary==2.9.9       # Для работы с PostgreSQL
+gunicorn==21.2.0              # Веб-сервер для продакшена
+whitenoise==6.6.0             # Для раздачи статических файлов
+django-cors-headers==4.3.1    # Для CORS (если нужно)

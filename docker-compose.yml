@@ -1,0 +1,86 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: traffic_sign_db
+      POSTGRES_USER: traffic_sign_user
+      POSTGRES_PASSWORD: traffic_sign_password
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traffic_sign_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and Celery
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application
+  web:
+    build: ./web
+    volumes:
+      - ./web:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://traffic_sign_user:traffic_sign_password@db:5432/traffic_sign_db
+      DEBUG: "True"
+      SECRET_KEY: django-insecure-development-key-change-in-production
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: traffic_sign_app.settings
+    depends_on:
+      - db
+      - redis
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  # ML API Service (FastAPI)
+  api:
+    build: ./api
+    volumes:
+      - ./api:/app
+    ports:
+      - "8001:8001"
+    environment:
+      DEBUG: "True"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    depends_on:
+      - db
+
+  # Celery Worker
+  celery:
+    build: ./web
+    command: celery -A traffic_sign_app worker --loglevel=info
+    volumes:
+      - ./web:/app
+    environment:
+      DATABASE_URL: postgres://traffic_sign_user:traffic_sign_password@db:5432/traffic_sign_db
+      DEBUG: "True"
+      SECRET_KEY: django-insecure-development-key-change-in-production
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: traffic_sign_app.settings
+      PYTHONPATH: /app
+    depends_on:
+      - redis
+      - db
+      - web
+
+volumes:
+  postgres_data:
+  redis_data:
