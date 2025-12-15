@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+venv_pycharm/
+.venv/
+
+# Environment variables
+.env
+
+# IDE
+.idea/
+*.swp
+
+# ML models and data
+*.h5
+*.pth
+*.pkl
+data/
+models/
+
+# Docker
+*.log
